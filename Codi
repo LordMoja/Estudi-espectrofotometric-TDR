@@ -1,0 +1,48 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import warnings
+from specutils.manipulation import noise_region_uncertainty
+from astropy import units as u 
+from specutils.fitting import find_lines_derivative
+from specutils import Spectrum1D
+from specutils import SpectralRegion
+from astropy.modeling import models
+from specutils.fitting import fit_generic_continuum
+
+
+id = int(input("Introdueix index: "))
+Espectres = fits.open('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\mastar-goodspec-v3_1_1-v1_7_7.fits')[1].data
+
+print(Espectres["PSFMAG"][id])
+EspectreD1 = Spectrum1D(Espectres["FLUX"][id] *  u.Jy, Espectres["WAVE"][id] *u.AA)
+Longitud_Ona = Espectres["WAVE"][id] *u.AA
+Flux_Estrella = Espectres["Flux"][id]
+'''
+plt.plot(Longitud_Ona,Flux_Estrella)
+plt.ylabel("Flux (1e-17 erg/s/cm$^2$/Angstrom")
+plt.xlabel("wavelength (Angstroms)")
+'''
+n = -1500
+noise_region = SpectralRegion(7000*u.AA, 10000*u.AA)
+spectrum = noise_region_uncertainty(EspectreD1, noise_region)
+with warnings.catch_warnings():  # Ignore warnings
+    warnings.simplefilter('ignore')
+    linies = find_lines_derivative(spectrum, flux_threshold= n)
+
+while len(linies[linies['line_type'] == 'absorption']) >= 100:
+    n += 50
+    with warnings.catch_warnings():
+         warnings.simplefilter('ignore')
+         linies = find_lines_derivative(spectrum, flux_threshold= n)
+    if len(linies['line_center']) <= 100:
+        print(linies[linies['line_type'] == 'absorption'])
+print(linies[linies['line_type'] == 'absorption'])
+g1_fit = fit_generic_continuum(EspectreD1)
+y_continuum_fitted = g1_fit(Longitud_Ona)
+fig,ax = plt.subplots(figsize=(15,3))
+plt.plot(Longitud_Ona,Flux_Estrella)
+plt.title('Star ID: {}'.format(id))
+plt.xlim(3500,7500)
+plt.xlabel('Wavelength (Ang)')
+plt.ylabel('Counts')
+plt.show()

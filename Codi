@@ -1,3 +1,4 @@
+import astropy.io.fits as fits
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
@@ -8,41 +9,127 @@ from specutils import Spectrum1D
 from specutils import SpectralRegion
 from astropy.modeling import models
 from specutils.fitting import fit_generic_continuum
+from pandas import read_csv
+from specutils.fitting import find_lines_threshold
+from specutils.manipulation import extract_region
+# 59266, 2.99792458*(10**18)
 
 
 id = int(input("Introdueix index: "))
 Espectres = fits.open('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\mastar-goodspec-v3_1_1-v1_7_7.fits')[1].data
 
 print(Espectres["PSFMAG"][id])
-EspectreD1 = Spectrum1D(Espectres["FLUX"][id] *  u.Jy, Espectres["WAVE"][id] *u.AA)
 Longitud_Ona = Espectres["WAVE"][id] *u.AA
 Flux_Estrella = Espectres["Flux"][id]
+n_items= 0 
+Espectres["PSFMAG"][id]
+print(Espectres["PHOTOCAT"][id])
+if Espectres["PHOTOCAT"][id] == "sdss_dr8":
+  EspectresUGRIZ =  [float(i) for i in Espectres["PSFMAG"][id]]
+  print(EspectresUGRIZ)
+  g = EspectresUGRIZ[1]
+  r = EspectresUGRIZ[2]
+  B = float(g + 0.3130*(g - r) + 0.2271)
+  V = float(g - 0.5784*(g - r) - 0.0038)
+  Color_Index = B - V
+elif Espectres["PHOTOCAT"][id] == "ps1":
+    EspectresGRIZ = [float(i) for i in Espectres["PSFMAG"][id]]
+    print(EspectresGRIZ)
+    g = EspectresGRIZ[1]
+    r = EspectresGRIZ[2]
+    B = float(g + 0.3130*(g - r) + 0.2271)
+    V = float(g - 0.5784*(g - r) - 0.0038)
+    Color_Index = B - V
+elif Espectres["PHOTOCAT"][id] == "apass_dr8":
+    EspectresGRI = [float(i) for i in Espectres["PSFMAG"][id]]
+    print(EspectresGRI)
+    g = EspectresGRI[1]
+    r = EspectresGRI[2]
+    B = float(g + 0.3130*(g - r) + 0.2271)
+    V = float(g - 0.5784*(g - r) - 0.0038)
+    Color_Index = B - V
+elif Espectres["PHOTOCAT"][id] == "gaia_dr2":
+    EspectresGAIA = [float(i) for i in Espectres["PSFMAG"][id]]
+    print(EspectresGAIA)
+    G = float(EspectresGAIA[1])
+    G_BP = float(EspectresGAIA[2])
+    G_RP = float(EspectresGAIA[3])
+    V = 0.02704 - 0.01424*(G_BP - G_RP) + 0.2156*((G_BP - G_RP)**2.0) - 0.01426*((G_BP - G_RP)**3.0) + G
+    g = - 0.2199 + 0.6365*(G_BP - G_RP) + 0.1548*((G_BP - G_RP)**2.0) - 0.0064*((G_BP - G_RP)**3.0) + G
+    r = +0.09837 - 0.08592*(G_BP - G_RP) - 0.1907*((G_BP - G_RP)**2.0) + 0.1701*((G_BP - G_RP)**3.0) - 0.02263*((G_BP - G_RP)**4.0) + G
+    B = g + 0.3130*(g - r) + 0.2271
+    Color_Index = B - V
+
+Teff = (4600*((1/(0.92 * Color_Index + 1.7)) + (1/(0.92 * Color_Index + 0.62))))
+print(Teff)
 '''
-plt.plot(Longitud_Ona,Flux_Estrella)
-plt.ylabel("Flux (1e-17 erg/s/cm$^2$/Angstrom")
-plt.xlabel("wavelength (Angstroms)")
+
+LiniesÀtoms = read_csv('C:\\Users\\MohamedAmriDoudouh\\Downloads\\ElementsTDR.csv')
+
+linies_cen = linies[linies['line_type'] == 'absorption']['line_center'] / u.AA
+
+def closest():
+    global LiniesÀtoms['Rest λ (Å)']
+    global linies_cen
+    x = 0 
+    while x 
+    for y in LiniesÀtoms['Rest λ (Å)']:
+
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
+
+linies_cen = linies[linies['line_type'] == 'absorption']['line_center'] / u.AA
+
+linies_arr = [float(i) for i in linies_cen]
+
+for linies_abs in linies_cen:
+    for Linia_atom in LiniesÀtoms['Rest λ (Å)']:
+        x = float(Linia_atom) - float(linies_abs)
+        if  x <= 0.5 and x >= -0.5:
+         print(linies_abs)
+
+
+print(Espectres["HELIOV"][id])
+print(linies[linies['line_type'] == 'absorption'])
+
 '''
-n = -1500
-noise_region = SpectralRegion(7000*u.AA, 10000*u.AA)
-spectrum = noise_region_uncertainty(EspectreD1, noise_region)
+
+EspectreD1 = Spectrum1D(Espectres["FLUX"][id]*(u.Jy), Espectres["WAVE"][id]*u.AA)
+EspectreD1_net = extract_region(EspectreD1, SpectralRegion(4000* u.AA, 7000 * u.AA))
+EspectreD1_X = EspectreD1_net.spectral_axis
+EspectreD1_Y = EspectreD1_net.flux
+
+Espectre_Ajustat = fit_generic_continuum(EspectreD1_net)
+Flux_Ajustat = Espectre_Ajustat(EspectreD1_X)
+Espectre_normalitzat = EspectreD1_net / Flux_Ajustat
+
+n = -15
 with warnings.catch_warnings():  # Ignore warnings
     warnings.simplefilter('ignore')
-    linies = find_lines_derivative(spectrum, flux_threshold= n)
-
-while len(linies[linies['line_type'] == 'absorption']) >= 100:
-    n += 50
+    linies = find_lines_derivative(Espectre_normalitzat, flux_threshold= n)
+while len(linies[linies['line_type'] == 'absorption']) >= 20:
+    n += 0.1
     with warnings.catch_warnings():
          warnings.simplefilter('ignore')
-         linies = find_lines_derivative(spectrum, flux_threshold= n)
-    if len(linies['line_center']) <= 100:
-        print(linies[linies['line_type'] == 'absorption'])
-print(linies[linies['line_type'] == 'absorption'])
-g1_fit = fit_generic_continuum(EspectreD1)
-y_continuum_fitted = g1_fit(Longitud_Ona)
+         linies = find_lines_derivative(Espectre_normalitzat, flux_threshold= n)
+print(linies[linies['line_type'] == 'absorption']) 
+
+
+fig1, ax1 = plt.subplots(figsize=(10,9))
+ax1.plot(Espectre_normalitzat.spectral_axis, Espectre_normalitzat.flux)
+ax1.grid(True)
 fig,ax = plt.subplots(figsize=(15,3))
-plt.plot(Longitud_Ona,Flux_Estrella)
+plt.plot(EspectreD1_X , EspectreD1_Y)
+plt.plot(EspectreD1_X, Flux_Ajustat)
 plt.title('Star ID: {}'.format(id))
-plt.xlim(3500,7500)
 plt.xlabel('Wavelength (Ang)')
 plt.ylabel('Counts')
+fig1, ax1 = plt.subplots(figsize=(10,9))
+plt.plot(Longitud_Ona, Flux_Estrella)
 plt.show()
+
+#Estrelles a veure 687, 89, 876
+
+# Si la estrella té temperatura entre 2500 i 3900 s'haurà de mirar com detectar els elements

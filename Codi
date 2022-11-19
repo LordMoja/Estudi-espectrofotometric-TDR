@@ -16,22 +16,31 @@ from specutils.manipulation import extract_region
 from specutils.analysis import centroid
 from bokeh.plotting import show
 from bokeh.io import output_notebook, show, output_file
-from bokeh.plotting import figure
+from bokeh.plotting import figure, curdoc
 from bokeh.models.tools import HoverTool
 from bokeh.models import ColumnDataSource, NumeralTickFormatter
 from bokeh.models import Span, LabelSet, Label
-
-
+from bokeh.io import show
+from bokeh.models import CustomJS, NumericInput
+from bokeh.layouts import column
+from bokeh.client import push_session
 # 59266, 2.99792458*(10**18)
 
-
-id = int(input("Introdueix index: "))
+P = figure(width=1200, height=600)
+id = 0
+id_input = NumericInput(title="Introdueix Index", mode='int', value=id)
+def update_id(attrname, old, new):
+    Espectres["Flux"][id] = Espectres["Flux"][new]
+    Espectres["WAVE"][id] = Espectres["WAVE"][new]
+    Espectres["PHOTOCAT"][id] = Espectres["PHOTOCAT"][new]
+    Espectres['HELIOV'][id] = Espectres['HELIOV'][new]
+id_input.on_change('value', update_id)
 Espectres = fits.open('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\mastar-goodspec-v3_1_1-v1_7_7.fits')[1].data
+
 
 print(Espectres["PSFMAG"][id])
 Longitud_Ona = Espectres["WAVE"][id] *u.AA
 Flux_Estrella = Espectres["Flux"][id]
-n_items= 0 
 Espectres["PSFMAG"][id]
 print(Espectres["PHOTOCAT"][id])
 if Espectres["PHOTOCAT"][id] == "sdss_dr8":
@@ -98,17 +107,25 @@ LiniesEspectre = linies[linies['line_type'] == 'absorption']['line_center'] / u.
 
 LiniesNom = []
 LiniesTrobades = []
+z = float(Espectres['HELIOV'][id])/(3*(10**6))
+if z < 1*(10**-5):
+    z_1 = abs(z*(10**5))
+else:
+    z_1 = abs(z*(10**4))
 
+print(z_1)
 for linies_abs in LiniesEspectre:
     for Linia_atom in LiniesÀtoms['Rest λ (Å)']:
             x = float(Linia_atom) - float(linies_abs)
-            if  x <= 2 and x >= -2:
+            if  x <= 1.5 and x >= -1.5:
                 n = LiniesÀtoms[LiniesÀtoms['Rest λ (Å)'] == Linia_atom].index[0]
                 LiniesNom.append(LiniesÀtoms['Name'][n])
                 LiniesTrobades.append(LiniesÀtoms['Rest λ (Å)'][n])
 
-LiniesTrobades_Int = np.array(LiniesTrobades)
 
+print(LiniesNom)
+print(Espectres['HELIOV'][id])
+'''
 fig1, ax1 = plt.subplots(figsize=(10,9))
 ax1.plot(Espectre_normalitzat.spectral_axis, Espectre_normalitzat.flux)
 ax1.grid(True)
@@ -120,16 +137,38 @@ plt.xlabel('Wavelength (Ang)')
 plt.ylabel('Counts')
 fig1, ax1 = plt.subplots(figsize=(10,9))
 plt.show
+'''
+LiniesTrobades_Python = np.array(LiniesTrobades)
+P = figure(width=1200, height=600)
 
-
-P = figure(width=700, height=600)
-P.line(EspectreD1.spectral_axis.value, EspectreD1.flux.value)
-for LiniaTrobada in LiniesTrobades_Int:
-    z = LiniesTrobades_Int[LiniesTrobades_Int == LiniaTrobada].index[0]
+P.line(EspectreD1_net.spectral_axis.value, EspectreD1_net.flux.value)
+for LiniaTrobada in LiniesTrobades_Python:
+    Valor_index = LiniesTrobades_Python.tolist().index(LiniaTrobada)
+    LiniaNom = LiniesNom[Valor_index]
+    Posició_Nom = int(LiniaTrobada-2)
     P.add_layout(Span(location=LiniaTrobada, dimension='height', line_color='red', line_dash='dashed', line_width=1))
-    P.add_layout(Label(x=LiniesTrobades[z]-2, y=70, x_units='data', y_units='screen', text=LiniesNom[z], render_mode='canvas',angle=90, angle_units='deg', text_font_size='8pt'))
-show(P)
+    P.add_layout(Label(x=Posició_Nom, y=70, x_units='data', y_units='screen', text=LiniaNom, angle=90, angle_units='deg', text_font_size='8pt'))
+curdoc().add_root(column(id_input, P))
 
-#Estrelles a veure 687, 89, 876
+session = push_session(curdoc())
+session.show()
+
+
+'''bokeh serve EspectrumReading.py
+http://localhost:5006/EspectrumReading
+fig1, ax1 = plt.subplots(figsize=(10,9))
+ax1.plot(Espectre_normalitzat.spectral_axis, Espectre_normalitzat.flux)
+ax1.grid(True)
+fig,ax = plt.subplots(figsize=(15,3))
+plt.plot(EspectreD1_X , EspectreD1_Y)
+plt.plot(EspectreD1_X, Flux_Ajustat)
+plt.title('Star ID: {}'.format(id))
+plt.xlabel('Wavelength (Ang)')
+plt.ylabel('Counts')
+fig1, ax1 = plt.subplots(figsize=(10,9))
+plt.show
+'''
+
+#Estrelles a veure 687, 89, 876,17893,8763, 39657, 8912, 30000, 456, 459
 
 # Si la estrella té temperatura entre 2500 i 3900 s'haurà de mirar com detectar els elements

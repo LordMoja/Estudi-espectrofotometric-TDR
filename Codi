@@ -3,7 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 import pandas as pd
-import plotly as px
+import plotly.express as px
+import plotly.graph_objects as go
 import math as m
 from astropy import units as u 
 from specutils.fitting import find_lines_derivative
@@ -12,6 +13,8 @@ from specutils import SpectralRegion
 from specutils.fitting import fit_generic_continuum
 from specutils.manipulation import extract_region
 from pandas import read_csv
+from plotly.subplots import make_subplots
+from astropy.coordinates import get_constellation, SkyCoord
 
 # 59266, 2.99792458*(10**18) BC = -8.499 [log(T)- 4]4 + 13.421[log(T)- 4]3- 8.131[log(T)- 4]2 - 3.901 [log(T)- 4] - 0.438
 Espectres = fits.open('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\mastar-goodspec-v3_1_1-v1_7_7.fits')[1].data
@@ -22,10 +25,9 @@ Longitud_Ona = Espectres["WAVE"][star_id] *u.AA
 Flux_Estrella = Espectres["Flux"][star_id]
 Gaia_index = int((np.where(Gaia_Data["PSFMAG"] == Espectres["PSFMAG"][star_id])[0])[0])
 Gaia_Data_Py = pd.DataFrame(Gaia_Data['R_EST'])
-Distancia_parsec = int(Gaia_Data_Py.iloc[Gaia_index])
+Distancia = int(Gaia_Data_Py.iloc[Gaia_index])
 
-print(Distancies_Gaia)
-
+print(Distancia)
 
 if Espectres["PHOTOCAT"][star_id] == "sdss_dr8":
   EspectresUGRIZ =  [float(i) for i in Espectres["PSFMAG"][star_id]]
@@ -61,17 +63,30 @@ elif Espectres["PHOTOCAT"][star_id] == "gaia_dr2":
 
 Teff = int(((4600*((1/(0.92 * Color_Index + 1.7)) + (1/(0.92 * Color_Index + 0.62))))))
 print(Teff)
-BC = -8.499*((m.log(Teff)-4)**4) + 13.421*((m.log(Teff)-4)**3) - 8.131*((m.log(Teff)-4)**2) - 3.901*(m.log(Teff)-4) - 0,438
+Log_teff = m.log10(Teff)
+BC = float(-8.499*((Log_teff-4)**4) + 13.421*((Log_teff-4)**3) - 8.131*((Log_teff-4)**2) - 3.901*(Log_teff-4) - 0.438)
 print(BC)
-
-L_Sol = 3.827*(10**26)
-L = (10**(0.4*(4.85 - V)))*L_Sol
-print(L)
-
+MV = V - 2.5*((m.log10(Distancia/10))**2)
+MBol = MV + BC
+print(MBol)
+L_o = 3.827*(10**26)
+L = ((10**(-0.4*(MBol)))*((3.0128*(10**28))))
+L_Sol = L/(3.827*(10**26))
+print(L_Sol)
+Radi =  m.sqrt((L/(4*m.pi*(5.6703*(10**-8))*(Teff**4))))/(10**3)
+print(Radi)
+Massa = L_Sol**(1/3.5)
+print(Massa)
+Ra = Espectres["RA"][star_id]
+Dec = Espectres["DEC"][star_id]
+Coordinades = SkyCoord(Ra, Dec, unit = u.deg)
+Constelació = get_constellation(Coordinades, short_name=True, constellation_list='iau')
+print(Constelació)
+Velocitat_Heliocentrica = Espectres["HELIOV"][star_id]
 
 Classes_espectrals = pd.read_csv('C:\\Users\\MohamedAmriDoudouh\\Downloads\\Espectral_classes.csv')
 Classes_espectrals_1 = Classes_espectrals.iloc[(Classes_espectrals['Temp']-Teff).abs().argsort()[:3]]
-Classe_Estrella = Classes_espectrals_1.iloc[(Classes_espectrals_1['Abs_Mag']-V).abs().argsort()[:1]]
+Classe_Estrella = Classes_espectrals_1.iloc[(Classes_espectrals_1['Abs_Mag']-V).abs().argsort()[:1]]['Stellar_Type']
 print(Classe_Estrella)
 print(V)
 
@@ -79,7 +94,6 @@ EspectreD1 = Spectrum1D(Espectres["FLUX"][star_id]*(u.Jy), Espectres["WAVE"][sta
 EspectreD1_net = extract_region(EspectreD1, SpectralRegion(4000* u.AA, 7000 * u.AA))
 EspectreD1_X = EspectreD1_net.spectral_axis
 EspectreD1_Y = EspectreD1_net.flux
-
 Espectre_Ajustat = fit_generic_continuum(EspectreD1_net)
 Flux_Ajustat = Espectre_Ajustat(EspectreD1_X)
 Espectre_normalitzat = EspectreD1_net / Flux_Ajustat
@@ -107,35 +121,31 @@ for linies_abs in LiniesEspectre:
                 n = LiniesÀtoms[LiniesÀtoms['Rest λ (Å)'] == Linia_atom].index[0]
                 LiniesNom.append(LiniesÀtoms['Name'][n])
                 LiniesTrobades.append(LiniesÀtoms['Rest λ (Å)'][n])
-fig = px.line(x=EspectreD1_net.spectral_axis, y=EspectreD1_net.flux, title=Id_estrlla,)
+
 LiniesTrobades_Python = np.array(LiniesTrobades)
 
+
+fig = px.line(x=EspectreD1_net.spectral_axis, y=EspectreD1_net.flux, title="Espectre estrella")
+fig.update_yaxes(title_text='Fluxe (1e-17 erg/s/cm^2/Angstrom)')
+fig.update_xaxes(title_text='Longitud Ona (Å)')
+
+
 for LiniaTrobada in LiniesTrobades_Python:
         Valor_index = LiniesTrobades_Python.tolist().index(LiniaTrobada)
         LiniaNom = LiniesNom[Valor_index]
         Posició_Nom = int(LiniaTrobada-2)
         fig.add_vline(x=LiniaTrobada, line_width=1, line_dash="dash", line_color="orange", annotation_text=LiniaNom, annotation_position="bottom right")
+
+
+fig1 = go.Figure(data=[go.Table(header=dict(values=["Magnitud aparent", "Magnitud Absoluta", "Magnitud Bolometrica","Lluminositat(☉)", "Distancia(parsec)", "Radi(Km)","Massa(☉)", "Ra","Dec","Constel·lació","Velocitat Heliocèntrica(Km/s)"],
+font=dict(size=10), align="left"), cells=dict(values=[V, MV, MBol, L_Sol, Distancia, Radi, Massa, Ra, Dec, Constelació, Velocitat_Heliocentrica], align = "left"))])
+
+fig3 = go.Figure(data=[go.Table(header=dict(values=[LiniesNom], font=dict(size=10), align="left"), cells=dict( values=[LiniesTrobades], align = "left"))])
+
+fig.update_layout(
+    height=500,
+    showlegend=False,
+    title_text=("Espectre estrella: " + Espectres['MANGAID'][star_id]),
+)
 fig.show()
-
-'''
-fig1, ax1 = plt.subplots(figsize=(10,9))
-ax1.plot(Espectre_normalitzat.spectral_axis, Espectre_normalitzat.flux)
-ax1.grid(True)
-fig,ax = plt.subplots(figsize=(15,3))
-plt.plot(EspectreD1_X , EspectreD1_Y)
-plt.plot(EspectreD1_X, Flux_Ajustat)
-plt.title('Star star_id: {}'.format(star_id))
-plt.xlabel('Wavelength (Ang)')
-plt.ylabel('Counts')
-fig1, ax1 = plt.subplots(figsize=(10,9))
-plt.show
-for LiniaTrobada in LiniesTrobades_Python:
-        Valor_index = LiniesTrobades_Python.tolist().index(LiniaTrobada)
-        LiniaNom = LiniesNom[Valor_index]
-        Posició_Nom = int(LiniaTrobada-2)
-        fig.add_vline(x=LiniaTrobada, line_width=1, line_dash="dash", line_color="orange", annotation_text=LiniaNom, annotation_position="bottom right")
-'''
-
-#Estrelles a veure 687, 89, 876,17893,8763, 39657, 8912, 30000, 456, 459
-
-# Si la estrella té temperatura entre 2500 i 3900 s'haurà de mirar com detectar els elements
+fig1.show()

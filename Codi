@@ -56,63 +56,6 @@ elif Espectres["PHOTOCAT"][star_id] == "gaia_dr2":
     G = float(EspectresGAIA[1])
     G_BP = float(EspectresGAIA[2])
     G_RP = float(EspectresGAIA[3])
-import astropy.io.fits as fits
-import numpy as np
-import matplotlib.pyplot as plt
-import warnings
-import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-import math as m
-from astropy import units as u 
-from specutils.fitting import find_lines_derivative
-from specutils import Spectrum1D
-from specutils import SpectralRegion
-from specutils.fitting import fit_generic_continuum
-from specutils.manipulation import extract_region
-from pandas import read_csv
-from plotly.subplots import make_subplots
-from astropy.coordinates import get_constellation, SkyCoord
-
-# 59266, 2.99792458*(10**18) BC = -8.499 [log(T)- 4]4 + 13.421[log(T)- 4]3- 8.131[log(T)- 4]2 - 3.901 [log(T)- 4] - 0.438
-Espectres = fits.open('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\mastar-goodspec-v3_1_1-v1_7_7.fits')[1].data
-Gaia_Data = fits.open('C:\\Users\\MohamedAmriDoudouh\\Downloads\\mastarall-gaiadr2-extcorr-simbad-ps1-v3_1_1-v1_7_7-v1.fits')[1].data
-id = str(input("Introdueix Index: "))
-star_id = 89
-#(np.where(Espectres["MANGAID"] == id)[0])[0]
-print(star_id)
-Longitud_Ona = Espectres["WAVE"][star_id] *u.AA
-Flux_Estrella = Espectres["Flux"][star_id]
-Gaia_index = int((np.where(Gaia_Data["PSFMAG"] == Espectres["PSFMAG"][star_id])[0])[0])
-
-print(Distancia)
-
-if Espectres["PHOTOCAT"][star_id] == "sdss_dr8":
-  EspectresUGRIZ =  [float(i) for i in Espectres["PSFMAG"][star_id]]
-  g = EspectresUGRIZ[1]
-  r = EspectresUGRIZ[2]
-  B = float(g + 0.3130*(g - r) + 0.2271)
-  V = float(g - 0.5784*(g - r) - 0.0038)
-  Color_Index = B - V
-elif Espectres["PHOTOCAT"][star_id] == "ps1":
-    EspectresGRIZ = [float(i) for i in Espectres["PSFMAG"][star_id]]
-    g = EspectresGRIZ[1]
-    r = EspectresGRIZ[2]
-    B = float(g + 0.3130*(g - r) + 0.2271)
-    V = float( g - 0.5784*(g - r) - 0.0038)
-    Color_Index = B - V
-elif Espectres["PHOTOCAT"][star_id] == "apass_dr8":
-    EspectresGRI = [float(i) for i in Espectres["PSFMAG"][star_id]]
-    g = EspectresGRI[1]
-    r = EspectresGRI[2]
-    B = float(g + 0.3130*(g - r) + 0.2271)
-    V = float(g - 0.5784*(g - r) - 0.0038)
-    Color_Index = B - V
-elif Espectres["PHOTOCAT"][star_id] == "gaia_dr2":
-    EspectresGAIA = [float(i) for i in Espectres["PSFMAG"][star_id]]
-    G = float(EspectresGAIA[1])
-    G_BP = float(EspectresGAIA[2])
-    G_RP = float(EspectresGAIA[3])
     V = 0.02704 - 0.01424*(G_BP - G_RP) + 0.2156*((G_BP - G_RP)**2.0) - 0.01426*((G_BP - G_RP)**3.0) + G
     g = - 0.2199 + 0.6365*(G_BP - G_RP) + 0.1548*((G_BP - G_RP)**2.0) - 0.0064*((G_BP - G_RP)**3.0) + G
     r = +0.09837 - 0.08592*(G_BP - G_RP) - 0.1907*((G_BP - G_RP)**2.0) + 0.1701*((G_BP - G_RP)**3.0) - 0.02263*((G_BP - G_RP)**4.0) + G
@@ -213,4 +156,3 @@ fig1.update_layout(
 )
 fig.show()
 fig1.show()
-

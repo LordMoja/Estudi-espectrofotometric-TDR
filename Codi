@@ -1,5 +1,6 @@
 import astropy.io.fits as fits
 import numpy as np
+import matplotlib.pyplot as plt
 import warnings
 import pandas as pd
 import plotly.express as px
@@ -18,14 +19,15 @@ from astropy.coordinates import get_constellation, SkyCoord
 # 59266, 2.99792458*(10**18) BC = -8.499 [log(T)- 4]4 + 13.421[log(T)- 4]3- 8.131[log(T)- 4]2 - 3.901 [log(T)- 4] - 0.438
 Espectres = fits.open('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\mastar-goodspec-v3_1_1-v1_7_7.fits')[1].data
 Gaia_Data = fits.open('C:\\Users\\MohamedAmriDoudouh\\Downloads\\mastarall-gaiadr2-extcorr-simbad-ps1-v3_1_1-v1_7_7-v1.fits')[1].data
-star_id = int(input("Introdueix Index: "))
-
+id = str(input("Introdueix Index: "))
+star_id = 89
+#(np.where(Espectres["MANGAID"] == id)[0])[0]
+print(star_id)
 Longitud_Ona = Espectres["WAVE"][star_id] *u.AA
 Flux_Estrella = Espectres["Flux"][star_id]
 Gaia_index = int((np.where(Gaia_Data["PSFMAG"] == Espectres["PSFMAG"][star_id])[0])[0])
 Gaia_Data_Py = pd.DataFrame(Gaia_Data['R_EST'])
 Distancia = int(Gaia_Data_Py.iloc[Gaia_index])
-
 print(Distancia)
 
 if Espectres["PHOTOCAT"][star_id] == "sdss_dr8":
@@ -60,7 +62,7 @@ elif Espectres["PHOTOCAT"][star_id] == "gaia_dr2":
     B = g + 0.3130*(g - r) + 0.2271
     Color_Index = B - V
 
-Teff = int(((4600*((1/(0.92 * Color_Index + 1.7)) + (1/(0.92 * Color_Index + 0.62))))))
+Teff = float(((4600*((1/(0.92 * Color_Index + 1.7)) + (1/(0.92 * Color_Index + 0.62))))))
 print(Teff)
 Log_teff = m.log10(Teff)
 BC = float(-8.499*((Log_teff-4)**4) + 13.421*((Log_teff-4)**3) - 8.131*((Log_teff-4)**2) - 3.901*(Log_teff-4) - 0.438)
@@ -85,7 +87,7 @@ Velocitat_Heliocentrica = Espectres["HELIOV"][star_id]
 
 Classes_espectrals = pd.read_csv('C:\\Users\\MohamedAmriDoudouh\\Downloads\\Espectral_classes.csv')
 Classes_espectrals_1 = Classes_espectrals.iloc[(Classes_espectrals['Temp']-Teff).abs().argsort()[:3]]
-Classe_Estrella = Classes_espectrals_1.iloc[(Classes_espectrals_1['Abs_Mag']-V).abs().argsort()[:1]]['Stellar_Type']
+Classe_Estrella = Classes_espectrals_1.iloc[(Classes_espectrals_1['Abs_Mag']-MV).abs().argsort()[:1]]['Stellar_Type']
 print(Classe_Estrella)
 print(V)
 
@@ -106,7 +108,7 @@ while len(linies[linies['line_type'] == 'absorption']) >= 30:
     with warnings.catch_warnings():
          warnings.simplefilter('ignore')
          linies = find_lines_derivative(Espectre_normalitzat, flux_threshold= n)
-
+print(linies[linies['line_type'] == 'absorption'])
 LiniesÀtoms = read_csv('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\ElementsTDR.csv')
 LiniesEspectre = linies[linies['line_type'] == 'absorption']['line_center'] / u.AA
 
@@ -136,8 +138,8 @@ for LiniaTrobada in LiniesTrobades_Python:
         fig.add_vline(x=LiniaTrobada, line_width=1, line_dash="dash", line_color="orange", annotation_text=LiniaNom, annotation_position="bottom right")
 
 
-fig1 = go.Figure(data=[go.Table(header=dict(values=["Magnitud aparent", "Magnitud Absoluta", "Magnitud Bolometrica","Lluminositat(☉)", "Distancia(parsec)", "Radi(Km)","Massa(☉)", "Ra","Dec","Constel·lació","Velocitat Heliocèntrica(Km/s)"],
-font=dict(size=10), align="left"), cells=dict(values=[V, MV, MBol, L_Sol, Distancia, Radi, Massa, Ra, Dec, Constelació, Velocitat_Heliocentrica], align = "left"))])
+fig1 = go.Figure(data=[go.Table(header=dict(values=["Classe estel·lar","Magnitud aparent", "Magnitud Absoluta", "Magnitud Bolometrica","Lluminositat(☉)", "Distancia(parsec)", "Radi(Km)","Massa(☉)", "Ra","Dec","Constel·lació","Velocitat Heliocèntrica(Km/s)"],
+font=dict(size=10), align="left"), cells=dict(values=[Classe_Estrella,round(V,2), round(MV,2), round(MBol,2), round(L_Sol,2), round(Distancia,2), round(Radi,2), round(Massa,2), round(Ra,2), Dec, Constelació, round(Velocitat_Heliocentrica, 2)], align = "left"))])
 
 fig3 = go.Figure(data=[go.Table(header=dict(values=[LiniesNom], font=dict(size=10), align="left"), cells=dict( values=[LiniesTrobades], align = "left"))])
 
@@ -145,6 +147,11 @@ fig.update_layout(
     height=500,
     showlegend=False,
     title_text=("Espectre estrella: " + Espectres['MANGAID'][star_id]),
+)
+fig1.update_layout(
+    height=500,
+    showlegend=False,
+    title_text=("Característiques estrella: " + Espectres['MANGAID'][star_id]),
 )
 fig.show()
 fig1.show()

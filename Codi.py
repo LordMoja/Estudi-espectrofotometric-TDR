@@ -133,7 +133,7 @@ for LiniaTrobada in LiniesTrobades_Python:
         fig.add_vline(x=LiniaTrobada, line_width=1, line_dash="dash", line_color="orange", annotation_text=LiniaNom, annotation_position="bottom right")
 
 
-fig1 = go.Figure(data=[go.Table(header=dict(values=["Classe estel·lar","Magnitud aparent", "Magnitud Absoluta", "Magnitud Bolometrica","Temperatura Efectiva(k)", "Lluminositat(☉)", "Distancia(parsec)", "Radi(Km)","Massa(☉)", "Ra","Dec","Constel·lació","Velocitat Heliocèntrica(Km/s)"],
+fig1 = go.Figure(data=[go.Table(header=dict(values=["Classe estel·lar","Magnitud aparent", "Magnitud Absoluta", "Magnitud Bolometrica","Temperatura Efectiva", "Lluminositat(☉)", "Distancia(parsec)", "Radi(Km)","Massa(☉)", "Ra","Dec","Constel·lació","Velocitat Heliocèntrica(Km/s)"],
 font=dict(size=10), align="left"), cells=dict(values=[Classe_Estrella,round(V,2), round(MV,2), round(MBol,2),round(Teff, 2), round(L_Sol,2), round(Distancia,2), round(Radi,2), round(Massa,2), round(Ra,2), Dec, Constelació, round(Velocitat_Heliocentrica, 2)], align = "left"))])
 
 
@@ -149,4 +149,3 @@ fig1.update_layout(
 )
 fig.show()
 fig1.show()
-

@@ -16,7 +16,8 @@ from pandas import read_csv
 from plotly.subplots import make_subplots
 from astropy.coordinates import get_constellation, SkyCoord
 
-
+#On posa Espectres cal que es posi la direcció on es troba l'arxiu mastar-goodspec-v3_1_1-v1_7_7.fits entre les parentesis
+#On posa Gaia_Data cal que es posi la direcció on es troba l'arxiu mastarall-gaiadr2-extcorr-simbad-ps1-v3_1_1-v1_7_7-v1.fits entre les parentesis
 Espectres = fits.open('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\mastar-goodspec-v3_1_1-v1_7_7.fits')[1].data
 Gaia_Data = fits.open('C:\\Users\\MohamedAmriDoudouh\\Downloads\\mastarall-gaiadr2-extcorr-simbad-ps1-v3_1_1-v1_7_7-v1.fits')[1].data
 id = str(input("Introdueix MANGAID: "))
@@ -84,7 +85,7 @@ Constelació = get_constellation(Coordinades, short_name=True, constellation_lis
 
 Velocitat_Heliocentrica = Espectres["HELIOV"][star_id]
 
-Classes_estel·lars = pd.read_csv('C:\\Users\\MohamedAmriDoudouh\\Downloads\\Espectral_classes.csv')
+Classes_estel·lars = pd.read_csv('C:\\Users\\MohamedAmriDoudouh\\Downloads\\Stellar_classes.csv') #Entre les parentesis cal que es posi la direcció de la taula Stellar_classes
 Classes_estel·lar_1 = Classes_estel·lars.iloc[(Classes_estel·lars['Temp']-Teff).abs().argsort()[:3]]
 Classe_Estrella = Classes_estel·lar_1.iloc[(Classes_estel·lar_1['Abs_Mag']-MV).abs().argsort()[:1]]['Stellar_Type']
 
@@ -105,7 +106,7 @@ while len(linies[linies['line_type'] == 'absorption']) >= 30:
     with warnings.catch_warnings():
          warnings.simplefilter('ignore')
          linies = find_lines_derivative(Espectre_normalitzat, flux_threshold= n)
-LiniesÀtoms = read_csv('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\ElementsTDR.csv')
+LiniesÀtoms = read_csv('C:\\Users\\MohamedAmriDoudouh\\Desktop\\Tdr\\ElementsTDR.csv') # Entre les parentesis cal que es posi la direcció de la taula ElementsTDR
 LiniesEspectre = linies[linies['line_type'] == 'absorption']['line_center'] / u.AA
 
 LiniesNom = []
